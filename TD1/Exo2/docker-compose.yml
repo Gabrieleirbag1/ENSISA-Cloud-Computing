@@ -1,19 +1,63 @@
 services:
   app:
     build: .
-    ports:
-      - "80:80"
+    environment:
+      DATABASE_URL: mysql://root:root@db:3306/todo?useSSL=false\&allowPublicKeyRetrieval=true\&serverTimezone=GMT
+      AUTH: 0
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.rule=Host(`localhost`)"
+      - "traefik.http.services.app.loadbalancer.server.port=8080"
+      - "traefik.docker.network=traefik-net"
+    networks:
+      - traefik-net
+      - app-db
+
   db:
     image: mysql:latest
     environment:
       MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: test
-      MYSQL_USER: test
-      MYSQL_PASSWORD: test
-    ports:
-      - "3306:3306"
+      MYSQL_DATABASE: todo
     volumes:
       - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "sh", "-c", "mysqladmin -p$MYSQL_ROOT_PASSWORD ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - app-db
+
+  traefik:
+    image: traefik:v2.11
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - traefik-net
 
 volumes:
   db_data:
+
+networks:
+  traefik-net:
+    external: true
+  app-db:
+    driver: bridge
