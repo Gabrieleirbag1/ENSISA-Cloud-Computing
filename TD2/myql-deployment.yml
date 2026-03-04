@@ -29,13 +29,22 @@ spec:
         name: mysql
         env:
         - name: MYSQL_ROOT_PASSWORD
-          value: toto
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-root-password
         - name: MYSQL_DATABASE
           value: tododb
         - name: MYSQL_USER
-          value: toto
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user
         - name: MYSQL_PASSWORD
-          value: toto
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-password
         ports:
         - containerPort: 3306
           name: mysql
@@ -60,9 +69,15 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 3
         volumeMounts:
-        - name: mysql-persistent-storage
-          mountPath: /var/lib/mysql
+          - name: secret-volume
+            readOnly: true
+            mountPath: "/etc/secret-volume"
+          - name: mysql-persistent-storage
+            mountPath: /var/lib/mysql
       volumes:
       - name: mysql-persistent-storage
         persistentVolumeClaim:
           claimName: mysql-pv-claim
+      - name: secret-volume
+        secret:
+          secretName: mysql-secret
