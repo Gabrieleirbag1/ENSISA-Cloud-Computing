@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: mysql
+  clusterIP: None
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:9
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: toto
+        - name: MYSQL_DATABASE
+          value: tododb
+        - name: MYSQL_USER
+          value: toto
+        - name: MYSQL_PASSWORD
+          value: toto
+        ports:
+        - containerPort: 3306
+          name: mysql
+        startupProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - mysqladmin ping -h localhost --protocol=tcp -u root -p${MYSQL_ROOT_PASSWORD} | grep alive
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        livenessProbe:
+          exec:
+            command:
+            - sh
+            - -c
+            - mysqladmin ping -h localhost --protocol=tcp -u root -p${MYSQL_ROOT_PASSWORD} | grep alive
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
