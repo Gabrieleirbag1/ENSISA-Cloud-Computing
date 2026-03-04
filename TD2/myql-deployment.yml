@@ -53,7 +53,7 @@ spec:
             command:
             - sh
             - -c
-            - mysqladmin ping -h localhost --protocol=tcp -u root -p${MYSQL_ROOT_PASSWORD} | grep alive
+            - mysqladmin ping -h 127.0.0.1 --protocol=tcp -u root -p${MYSQL_ROOT_PASSWORD} | grep alive
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
@@ -63,7 +63,7 @@ spec:
             command:
             - sh
             - -c
-            - mysqladmin ping -h localhost --protocol=tcp -u root -p${MYSQL_ROOT_PASSWORD} | grep alive
+            - mysqladmin ping -h 127.0.0.1 --protocol=tcp -u root -p${MYSQL_ROOT_PASSWORD} | grep alive
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
