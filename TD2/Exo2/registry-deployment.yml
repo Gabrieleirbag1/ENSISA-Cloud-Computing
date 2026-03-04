@@ -22,6 +22,14 @@ spec:
         volumeMounts:
         - name: registry-persistent-storage
           mountPath: /var/lib/registry
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
       volumes:
       - name: registry-persistent-storage
         persistentVolumeClaim:
