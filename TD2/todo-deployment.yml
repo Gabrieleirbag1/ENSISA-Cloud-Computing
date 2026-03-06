@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo
+  template:
+    metadata:
+      labels:
+        app: todo
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: 127.0.0.1:30500/wait-for-it:latest
+        command:
+        - /wait-for-it.sh
+        - mysql:3306
+        - -s
+      containers:
+      - name: todo
+        image: 127.0.0.1:30500/todo:latest
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 8080
+        env:
+        - name: RDS_HOSTNAME
+          value: "mysql"
+        - name: RDS_PORT
+          value: "3306"
+        - name: RDS_DB_NAME
+          value: "tododb"
+        - name: RDS_USERNAME
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-user
+        - name: RDS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secret
+              key: mysql-root-password
+        - name: RDS_OPTIONS
+          value: "useSSL=false&allowPublicKeyRetrieval=true"
+        - name: AUTH
+          value: "false"

@@ -1,0 +1,1 @@
+FROM toschneck/wait-for-it:latest
